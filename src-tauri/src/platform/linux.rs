@@ -36,7 +36,9 @@ fn terminal_argv(bin: &str, cmd: &str) -> Vec<String> {
         "gnome-terminal" => vec![bin, "--"],
         "xfce4-terminal" => vec![bin, "-x"],
         "kitty" | "foot" => vec![bin],
-        // konsole, xterm, alacritty, x-terminal-emulator, and any other -e style
+        // konsole, xterm, alacritty, x-terminal-emulator use `-e`. A non-allowlisted
+        // $TERMINAL also lands here: `-e` is a best-effort guess that fits most
+        // terminals but may not suit every one.
         _ => vec![bin, "-e"],
     };
     let mut v: Vec<String> = head.into_iter().map(String::from).collect();
