@@ -1,4 +1,5 @@
 mod config;
+mod platform;
 mod pty;
 mod reader;
 
@@ -11,12 +12,7 @@ fn open_external(url: String) -> Result<(), String> {
     if !(url.starts_with("http://") || url.starts_with("https://")) {
         return Err("only http(s) URLs are allowed".into());
     }
-    std::process::Command::new("open")
-        .arg("--")
-        .arg(&url)
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+    platform::open_uri(&url)
 }
 
 /// Reveal a path (e.g. a session folder) in Finder. Reject leading-dash paths
@@ -30,12 +26,7 @@ fn open_path(path: String) -> Result<(), String> {
     let abs = std::path::PathBuf::from(&path)
         .canonicalize()
         .map_err(|e| e.to_string())?;
-    std::process::Command::new("open")
-        .arg("--")
-        .arg(&abs)
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+    platform::open_path(&abs)
 }
 
 /// Run a shell command in a new iTerm2 tab. The command is delivered to osascript
@@ -504,11 +495,14 @@ fn detach_session(app: tauri::AppHandle, key: String) -> Result<(), String> {
         return Ok(());
     }
     let url = format!("detail.html?key={}", percent_encode(&key));
-    tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::App(url.into()))
+    #[allow(unused_mut)]
+    let mut builder = tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::App(url.into()))
         .title("")
         .inner_size(560.0, 720.0)
-        .min_inner_size(360.0, 420.0)
-        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .min_inner_size(360.0, 420.0);
+    #[cfg(target_os = "macos")]
+    let builder = builder.title_bar_style(tauri::TitleBarStyle::Overlay);
+    builder
         .build()
         .map(|_| ())
         .map_err(|e| e.to_string())
