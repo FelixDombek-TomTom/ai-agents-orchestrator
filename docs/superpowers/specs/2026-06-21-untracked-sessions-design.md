@@ -141,3 +141,57 @@ gains a category + `notes.md` and appears as a normal tracked session.
 **Why deferred:** Part 1 is read-only and ships value alone; Adopt adds a write
 path + a skill + UI, and is cleanly separable. It gets its own spec → plan →
 implementation cycle.
+
+---
+
+## Further deferred ideas (roadmap)
+
+Each is independent and shippable on its own atop Part 1 (and, where noted,
+Part 2). Listed for planning; none is committed. "Source" marks whether the idea
+is already proven in `gwt-ls` (`~/code/my/gwt-ls`) or new to the orchestrator.
+
+### A. From gwt-ls — proven, transferable
+
+1. **PR enrichment on cards** *(source: gwt-ls)* — beyond today's PR-link display,
+   show PR number, title, state (open/merged/closed), draft flag, **CI** status
+   (pass/fail/pending), and **review** decision (approved/changes-requested/
+   review-required). gwt-ls fetches these via
+   `gh pr view --json title,state,isDraft,statusCheckRollup,reviewDecision` in
+   parallel and patches each row in progressively. *Why:* turns the dashboard into
+   a real review queue; complements the WG-coordinator workflow.
+2. **Content search inside transcripts** *(source: gwt-ls `--find`/`--find-all`)* —
+   search session *bodies* (user/assistant/title/last-prompt), not just card
+   titles, returning snippets + match counts. *Why:* "which session was I doing X
+   in?" — the Closed search is title-only today.
+3. **Live attribution via hooks** *(source: gwt-ls)* — `SessionStart`/`SessionEnd`
+   hooks writing `~/.claude/active/<pid>.json` (`{uuid, cwd, pid, started_at}`)
+   for exact running-session detection, replacing/augmenting the current
+   pid-alive heuristic. *Why:* more accurate Running state and untracked dedup.
+4. **Group by worktree / repo** *(source: gwt-ls)* — group the Closed/untracked
+   (and Running) lists by owning git repo / worktree. *Why:* matches how work is
+   actually organized; gwt-ls's default folder/repo grouping.
+5. **Tab snapshot / restore** *(source: gwt-ls `--save-tabs`/`--restore-tabs`)* —
+   persist a set of open sessions and relaunch them later ("restore my
+   workspace" across a reboot). *Why:* recover a multi-session working set in one
+   action.
+6. **ccc (Claude Code Container) session visibility** *(source: gwt-ls caveat)* —
+   ccc's Docker mount set omits `~/.claude/projects`, so containerized sessions
+   are invisible to any reader of that dir (this app included). Document/fix the
+   mount (`-v "$HOME/.claude/projects:$HOME/.claude/projects"`). *Why:* the ccc
+   sandbox is part of this user's workflow; otherwise those sessions silently
+   never appear.
+7. **Quick-resume by UUID prefix / command palette** *(source: gwt-ls `-r
+   <prefix>`)* — type a few characters of a session id (or title) to resume,
+   without scrolling the grid. *Why:* fast keyboard-first resume.
+
+### B. Orchestrator-native / Atlassian (new)
+
+8. **Jira enrichment** *(source: new)* — detect a ticket id (from session name,
+   branch, or transcript), resolve its status/title/assignee via the Atlassian
+   MCP, and show a chip on the card. Pairs with the existing `ticketBaseUrl`
+   config. *Why:* see ticket state without leaving the dashboard; aligns with the
+   jira-tree work. gwt-ls has GH enrichment but no Atlassian — this is net-new.
+9. **PR-from-branch detection** *(source: new)* — find a session's PR via
+   `gh pr list --head <branch>` even when it isn't a REVIEW session, so PR state
+   (idea A1) can appear on any card, not just ones with an explicit PR link.
+   *Why:* most sessions have a branch but no recorded PR link.
