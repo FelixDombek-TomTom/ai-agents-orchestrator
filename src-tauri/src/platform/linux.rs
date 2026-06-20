@@ -61,7 +61,7 @@ fn terminal_argv(bin: &str, cmd: &str) -> Vec<String> {
 fn resolve_terminal(selector: &str) -> Option<String> {
     fn on_path(bin: &str) -> bool {
         std::process::Command::new("sh")
-            .args(["-c", &format!("command -v {bin} >/dev/null 2>&1")])
+            .args(["-c", r#"command -v "$1" >/dev/null 2>&1"#, "sh", bin])
             .status()
             .map(|s| s.success())
             .unwrap_or(false)
