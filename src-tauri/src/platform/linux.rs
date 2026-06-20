@@ -98,6 +98,17 @@ pub fn launch_in_terminal(cmd: &str, selector: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+/// X11/Wayland give no portable way to focus a terminal window by its tty, so we
+/// never offer the "reveal window" button on Linux.
+pub fn can_reveal(_pid: i64) -> bool {
+    false
+}
+
+/// Defensive: unreachable while `can_reveal` is false, but return a clear error.
+pub fn reveal(_pid: i64) -> Result<(), String> {
+    Err("revealing an existing terminal window isn't supported on Linux".into())
+}
+
 /// Controlling tty of a pid, or None when it has no pty (e.g. it runs in our
 /// embedded pty rather than an external terminal window).
 pub fn session_tty(pid: i64) -> Option<String> {
@@ -130,6 +141,12 @@ mod tests {
         // gnome-terminal uses `--` before the program
         let a = terminal_argv("gnome-terminal", "echo hi");
         assert_eq!(a, vec!["gnome-terminal", "--", "bash", "-lc", "echo hi; exec bash"]);
+    }
+
+    #[test]
+    fn reveal_is_unsupported_on_linux() {
+        assert_eq!(super::can_reveal(12345), false);
+        assert!(super::reveal(12345).is_err());
     }
 
     #[test]
