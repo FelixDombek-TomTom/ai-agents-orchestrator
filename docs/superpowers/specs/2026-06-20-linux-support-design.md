@@ -59,7 +59,7 @@ Existing functions moved verbatim — no behavior change:
 |---|---|
 | `open_uri` / `open_path` | `xdg-open -- <arg>` |
 | `launch_in_terminal` | resolve a terminal, then spawn it running `bash -lc '<cmd>; exec bash'` so the window stays open after `claude` exits (matches macOS `do script`). |
-| `session_tty` | `ps -o tty=`, accept `pts/N` → `/dev/pts/N` (Linux `ps` prints `pts/0`, not `ttys003`) |
+| `session_tty` | **Not implemented on Linux.** Originally specced (`ps -o tty=`, `pts/N` → `/dev/pts/N`) on the assumption Linux reveal would use it; dropped during implementation as dead code once `can_reveal` became a constant `false` (nothing else calls it). It remains macOS-only. |
 | `can_reveal` | always `false` — there is no portable way to focus a terminal window by tty on X11/Wayland, so the UI never offers the button |
 | `reveal` | `Err("revealing an existing terminal window isn't supported on Linux")` — defensive; should be unreachable since `can_reveal` is false |
 
@@ -122,6 +122,10 @@ never re-interpolated, so no injection.
 
 - Signed/notarized or polished `.deb`/`.AppImage` release packaging
 - CI matrix changes (adding a Linux runner)
-- Focusing an existing external terminal window on Linux
+- Focusing an existing external terminal window on Linux. Future, desktop-specific
+  options (not portable, would be opt-in niceties layered on top — not a portable
+  `reveal`): have the `claude` session set the terminal tab title and surface it on
+  the session card so the user can eyeball-find the tab; or drive
+  `gnome-terminal-server` over D-Bus on GNOME.
 - Non-GNOME desktop verification (code supports KDE/others via the resolution
   list, but only GNOME/Wayland is verified here)
