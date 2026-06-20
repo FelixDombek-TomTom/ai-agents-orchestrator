@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.aiagentsorchestrator.app",
   "build": {
-    "frontendDist": "../renderer"
+    "frontendDist": "../renderer",
+    "beforeDevCommand": "npm install --no-audit --no-fund && npm run build:xterm",
+    "beforeBuildCommand": "npm install --no-audit --no-fund && npm run build:xterm"
   },
   "app": {
     "withGlobalTauri": true,
